@@ -1189,7 +1189,7 @@ function drawCircle() {
 
   // Build convex hull → expand → smooth
   let hull = convexHull(cornerPts);
-  hull = expandHull(hull, 24);
+  hull = expandHull(hull, 42);
   hull = smoothPoly(hull, 3);
 
   // Use RoughJS polygon to freehand-trace around the cards
