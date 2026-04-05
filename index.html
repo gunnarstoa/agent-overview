@@ -1172,16 +1172,16 @@ function drawCircle() {
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.innerHTML = '';
 
-  // Ellipse centered on the left half of the chart (low-value quadrants)
-  const cx = W * 0.39;
+  // Ellipse centered on the left-half quadrants (low-value area only)
+  const cx = W * 0.24;
   const cy = H * 0.50;
-  const rx = W * 0.36;
-  const ry = H * 0.46;
+  const rx = W * 0.24;
+  const ry = H * 0.44;
 
   // Two passes with different seeds — like RoughJS double-stroke
   const passes = [
-    { seed: 42,  width: 3,   opacity: 0.85, delay: 0,   dur: 1200 },
-    { seed: 137, width: 2.2, opacity: 0.55, delay: 200, dur: 1000 },
+    { seed: 42,  width: 2,   opacity: 0.8,  delay: 0,   dur: 800 },
+    { seed: 137, width: 1.5, opacity: 0.45, delay: 150, dur: 700 },
   ];
 
   passes.forEach(p => {
@@ -1208,8 +1208,8 @@ function positionLabel() {
   const chartEl = document.getElementById('chart1');
   const W = chartEl.offsetWidth, H = chartEl.offsetHeight;
   const lbl = document.getElementById('auto-label');
-  lbl.style.left = (W * 0.39 - 100) + 'px';
-  lbl.style.top = (H * 0.955) + 'px';
+  lbl.style.left = (W * 0.24 - 90) + 'px';
+  lbl.style.top = (H * 0.92) + 'px';
 }
 
 /* ══ Slide 4 agent node info ══ */
