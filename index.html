@@ -217,18 +217,19 @@ html, body {
 
 
 /* ════════════════════════════════════════════════
-   SLIDE 2 — Quadrant + circle callout
+   Circle overlay (toggled on slide 1)
    ════════════════════════════════════════════════ */
-#s2 { background: var(--bg); }
-
 #circle-overlay {
   position: absolute; inset: 0; width: 100%; height: 100%;
   pointer-events: none; z-index: 20;
+  opacity: 0; transition: opacity 0.4s ease;
 }
+#circle-overlay.visible { opacity: 1; }
 #auto-label {
   position: absolute; pointer-events: none; z-index: 25;
-  animation: fadeIn 0.5s ease 0.3s both;
+  opacity: 0; transition: opacity 0.4s ease 0.5s;
 }
+#auto-label.visible { opacity: 1; }
 @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
 #auto-label .pill {
   background: var(--red); color: white; font-size: 12px; font-weight: bold;
@@ -240,6 +241,19 @@ html, body {
   font-size: 9.5px; color: var(--red); margin-top: 4px; text-align: center;
   font-weight: 500; letter-spacing: 0.02em;
 }
+
+/* Draw-on animation for the circle strokes */
+#stroke1, #stroke2 { transition: stroke-dashoffset 1.2s ease; }
+
+.slide-header .circle-btn {
+  position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+  background: var(--orange); border: none; border-radius: 5px;
+  padding: 5px 12px; font-size: 10px; color: #fff; cursor: pointer;
+  font-family: var(--sans); font-weight: 500; letter-spacing: 0.03em;
+  transition: background 0.15s;
+}
+.slide-header .circle-btn:hover { background: #e55500; }
+.slide-header .circle-btn.active { background: var(--navy); }
 
 
 /* ════════════════════════════════════════════════
@@ -362,6 +376,7 @@ html, body {
      ══════════════════════════ -->
 <div id="s1" class="slide active">
   <div class="slide-header">
+    <button class="circle-btn" id="circle-toggle" onclick="toggleCircle()">Show opportunity</button>
     <h1>PSM Activity Map</h1>
     <p>Where PSM time is being spent today</p>
     <button class="reset-btn" onclick="resetCards()">Reset layout</button>
@@ -377,35 +392,6 @@ html, body {
         <div class="quad quad-tr">STRATEGIC</div>
         <div class="quad quad-bl">DEPRIORITIZE</div>
         <div class="quad quad-br">QUICK WINS</div>
-      </div>
-      <div class="x-axis-row">
-        <span class="low">Low</span>
-        <span class="lbl">VALUE</span>
-        <span class="high">High</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════
-     SLIDE 2 — Quadrant + Circle Callout
-     ══════════════════════════════════ -->
-<div id="s2" class="slide">
-  <div class="slide-header">
-    <h1>PSM Activity Map — Automation Opportunity</h1>
-    <p>Eliminating low-value tasks frees PSM capacity for strategic work</p>
-  </div>
-  <div class="quad-layout">
-    <div class="y-col">
-      <div class="y-label-wrap"><span class="y-label">PERSONALIZED EFFORT</span></div>
-      <div class="y-range"><span>High</span><span>Low</span></div>
-    </div>
-    <div class="right-col">
-      <div class="chart" id="chart2">
-        <div class="quad quad-tl">RECONSIDER</div>
-        <div class="quad quad-tr">STRATEGIC</div>
-        <div class="quad quad-bl">DEPRIORITIZE</div>
-        <div class="quad quad-br">QUICK WINS</div>
         <svg id="circle-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <filter id="marker-blur"><feGaussianBlur stdDeviation="1.8"/></filter>
@@ -415,8 +401,8 @@ html, body {
           <path id="stroke2" fill="none" stroke="rgb(220,20,20)" stroke-width="7" stroke-opacity="0.65" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <div id="auto-label">
-          <div class="pill">🤖 Automate or eliminate</div>
-          <div class="sub">~60–70% of current PSM time</div>
+          <div class="pill">Automate or eliminate</div>
+          <div class="sub">~60-70% of current PSM time</div>
         </div>
       </div>
       <div class="x-axis-row">
@@ -703,9 +689,8 @@ html, body {
   <div class="nav-center">
     <div class="slide-dots">
       <div class="dot active" onclick="goTo(0)" title="PSM Activity Map"></div>
-      <div class="dot" onclick="goTo(1)" title="Automation Opportunity"></div>
-      <div class="dot" onclick="goTo(2)" title="Partner Journeys"></div>
-      <div class="dot" onclick="goTo(3)" title="Agent Flow Map"></div>
+      <div class="dot" onclick="goTo(1)" title="Partner Journeys"></div>
+      <div class="dot" onclick="goTo(2)" title="Agent Flow Map"></div>
     </div>
     <span class="slide-label" id="slide-label">PSM Activity Map</span>
   </div>
@@ -720,7 +705,6 @@ html, body {
 /* ══ Slide navigation ══ */
 const SLIDES = [
   { id:'s1', label:'PSM Activity Map' },
-  { id:'s2', label:'Automation Opportunity' },
   { id:'s3', label:'Partner Journeys' },
   { id:'s4', label:'Agent Flow Map' },
 ];
@@ -736,8 +720,28 @@ function goTo(n) {
   document.getElementById('slide-label').textContent = SLIDES[current].label;
   document.getElementById('prev-btn').disabled = current === 0;
   document.getElementById('next-btn').disabled = current === SLIDES.length - 1;
-  if (current === 1) { setTimeout(() => { drawCircle(); positionLabel(); }, 50); }
-  if (current === 3) { /* SVG auto-scales */ }
+}
+
+/* ══ Circle toggle (slide 1) ══ */
+let circleVisible = false;
+function toggleCircle() {
+  circleVisible = !circleVisible;
+  const btn = document.getElementById('circle-toggle');
+  const overlay = document.getElementById('circle-overlay');
+  const label = document.getElementById('auto-label');
+  if (circleVisible) {
+    drawCircle();
+    positionLabel();
+    overlay.classList.add('visible');
+    label.classList.add('visible');
+    btn.textContent = 'Hide opportunity';
+    btn.classList.add('active');
+  } else {
+    overlay.classList.remove('visible');
+    label.classList.remove('visible');
+    btn.textContent = 'Show opportunity';
+    btn.classList.remove('active');
+  }
 }
 
 // Keyboard navigation
@@ -860,25 +864,22 @@ function makeDraggable(card, handle, chartEl, cardId) {
 function resetCards() {
   if (!confirm('Reset all cards to default positions?')) return;
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
-  ['chart1','chart2'].forEach(id => {
-    const chartEl = document.getElementById(id);
-    if (!chartEl) return;
-    const W = chartEl.offsetWidth, H = chartEl.offsetHeight;
-    CARDS.forEach(c => {
-      const suffix = id === 'chart1' ? '-s1' : '-s2';
-      const el = document.getElementById('card-'+c.id+suffix);
-      if (!el) return;
-      el.style.left=(c.px/100*W)+'px'; el.style.top=(c.py/100*H)+'px';
-      el.dataset.pctL=c.px; el.dataset.pctT=c.py;
-    });
+  const chartEl = document.getElementById('chart1');
+  if (!chartEl) return;
+  const W = chartEl.offsetWidth, H = chartEl.offsetHeight;
+  CARDS.forEach(c => {
+    const el = document.getElementById('card-'+c.id+'-s1');
+    if (!el) return;
+    el.style.left=(c.px/100*W)+'px'; el.style.top=(c.py/100*H)+'px';
+    el.dataset.pctL=c.px; el.dataset.pctT=c.py;
   });
   showToast('Layout reset');
 }
 
-/* ══ Circle (slide 2) ══ */
+/* ══ Circle overlay ══ */
 function drawCircle() {
-  const W = document.getElementById('chart2').offsetWidth;
-  const H = document.getElementById('chart2').offsetHeight;
+  const W = document.getElementById('chart1').offsetWidth;
+  const H = document.getElementById('chart1').offsetHeight;
   const cx=390, cy=500, rx=355, ry=460, n=300;
   function wobblePath(rxIn, ryIn, phase) {
     const pts=[];
@@ -894,7 +895,7 @@ function drawCircle() {
 }
 
 function positionLabel() {
-  const chartEl = document.getElementById('chart2');
+  const chartEl = document.getElementById('chart1');
   const W=chartEl.offsetWidth, H=chartEl.offsetHeight;
   const lbl=document.getElementById('auto-label');
   lbl.style.left=(W*0.39-100)+'px';
@@ -918,27 +919,22 @@ document.querySelectorAll('.agent-node').forEach(n => {
 
 /* ══ Resize handler ══ */
 window.addEventListener('resize', () => {
-  ['chart1','chart2'].forEach((id,i) => {
-    const chartEl = document.getElementById(id);
-    if (!chartEl) return;
+  const chartEl = document.getElementById('chart1');
+  if (chartEl) {
     const W=chartEl.offsetWidth, H=chartEl.offsetHeight;
-    const suffix = i===0 ? '-s1' : '-s2';
     CARDS.forEach(c => {
-      const el=document.getElementById('card-'+c.id+suffix);
+      const el=document.getElementById('card-'+c.id+'-s1');
       if (!el) return;
       el.style.left=(parseFloat(el.dataset.pctL)/100*W)+'px';
       el.style.top =(parseFloat(el.dataset.pctT)/100*H)+'px';
     });
-  });
-  if (current===1) { drawCircle(); positionLabel(); }
+  }
+  if (circleVisible) { drawCircle(); positionLabel(); }
 });
 
 /* ══ Boot ══ */
 window.addEventListener('load', () => {
   buildCards(document.getElementById('chart1'), '-s1');
-  buildCards(document.getElementById('chart2'), '-s2');
-  drawCircle();
-  positionLabel();
 });
 </script>
 </body>
