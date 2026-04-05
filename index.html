@@ -6,6 +6,7 @@
 <title>PSM Partner Success — Executive Overview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/roughjs/bundled/rough.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -323,7 +324,7 @@ html, body {
   transition: opacity 0.35s ease;
 }
 #circle-overlay path {
-  fill: none; stroke: var(--red); stroke-linecap: round; stroke-linejoin: round;
+  stroke-linecap: round; stroke-linejoin: round;
 }
 #auto-label {
   position: absolute; pointer-events: none; z-index: 25;
@@ -1115,53 +1116,7 @@ function resetCards() {
   showToast('Layout reset');
 }
 
-/* ══ RoughNotation-style circle overlay ══ */
-
-// Generate a rough hand-drawn ellipse path (like RoughJS)
-function roughEllipsePath(cx, cy, rx, ry, seed) {
-  const n = 120;           // number of points around the ellipse
-  const roughness = 1.5;   // how wobbly the line is
-  const bowing = 1.2;      // broad waviness
-  const rng = mulberry32(seed);  // seeded random for consistency
-
-  const pts = [];
-  for (let i = 0; i <= n; i++) {
-    const t = (2 * Math.PI * i) / n;
-    // Multiple noise frequencies for a natural hand-drawn feel
-    const jitterR = roughness * (rng() * 2 - 1) * 3;
-    const bow = bowing * Math.sin(3 * t + rng() * 0.5) * 4;
-    const drift = roughness * Math.sin(5 * t + seed) * 2;
-    const x = cx + (rx + jitterR + bow + drift) * Math.cos(t);
-    const y = cy + (ry + jitterR + bow * 0.7 + drift) * Math.sin(t);
-    pts.push([x, y]);
-  }
-
-  // Convert to SVG path with cubic bezier curves for smoothness
-  let d = `M ${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-  for (let i = 1; i < pts.length; i++) {
-    const prev = pts[i - 1];
-    const curr = pts[i];
-    const next = pts[Math.min(i + 1, pts.length - 1)];
-    // Simple catmull-rom to cubic bezier
-    const cp1x = prev[0] + (curr[0] - (i > 1 ? pts[i-2][0] : prev[0])) / 6;
-    const cp1y = prev[1] + (curr[1] - (i > 1 ? pts[i-2][1] : prev[1])) / 6;
-    const cp2x = curr[0] - (next[0] - prev[0]) / 6;
-    const cp2y = curr[1] - (next[1] - prev[1]) / 6;
-    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${curr[0].toFixed(1)},${curr[1].toFixed(1)}`;
-  }
-  d += ' Z';
-  return d;
-}
-
-// Simple seeded PRNG (mulberry32)
-function mulberry32(a) {
-  return function() {
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
+/* ══ Circle overlay — powered by RoughJS ══ */
 
 function drawCircle() {
   const svg = document.getElementById('circle-overlay');
@@ -1175,33 +1130,35 @@ function drawCircle() {
   // Ellipse centered on the left-half quadrants (low-value area only)
   const cx = W * 0.24;
   const cy = H * 0.50;
-  const rx = W * 0.24;
-  const ry = H * 0.44;
+  const ellipseW = W * 0.48;   // full width of ellipse
+  const ellipseH = H * 0.88;   // full height of ellipse
 
-  // Two passes with different seeds — like RoughJS double-stroke
-  const passes = [
-    { seed: 42,  width: 2,   opacity: 0.8,  delay: 0,   dur: 800 },
-    { seed: 137, width: 1.5, opacity: 0.45, delay: 150, dur: 700 },
-  ];
+  // Use RoughJS to draw a clean, confident hand-drawn ellipse
+  const rc = rough.svg(svg);
+  const node = rc.ellipse(cx, cy, ellipseW, ellipseH, {
+    stroke: '#c1121f',
+    strokeWidth: 2.5,
+    roughness: 0.8,
+    bowing: 0.4,
+    fill: 'none',
+    seed: 42,
+  });
 
-  passes.forEach(p => {
-    const d = roughEllipsePath(cx, cy, rx, ry, p.seed);
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('stroke-width', p.width);
-    path.setAttribute('stroke-opacity', p.opacity);
-    svg.appendChild(path);
-
-    // Measure length, set up stroke-dashoffset animation
+  // Extract paths from the RoughJS-generated group and animate them
+  const paths = node.querySelectorAll('path');
+  paths.forEach((path, i) => {
     const len = path.getTotalLength();
     path.style.strokeDasharray = len;
     path.style.strokeDashoffset = len;
-    path.style.animation = `rough-draw ${p.dur}ms ease-out ${p.delay}ms forwards`;
+    path.style.animation = `rough-draw ${700 + i * 200}ms ease-out ${i * 120}ms forwards`;
   });
+
+  svg.appendChild(node);
 
   // Show label after the circle finishes drawing
   const label = document.getElementById('auto-label');
-  setTimeout(() => label.classList.add('visible'), 1100);
+  const totalDur = 700 + (paths.length - 1) * 320;
+  setTimeout(() => label.classList.add('visible'), totalDur);
 }
 
 function positionLabel() {
