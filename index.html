@@ -138,13 +138,111 @@ html, body {
   white-space: nowrap;
 }
 .slide-header .stat strong { color: var(--navy); font-weight: 500; }
-.slide-header .reset-btn {
-  position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-  background: none; border: 1px solid var(--border); border-radius: 5px;
-  padding: 4px 10px; font-size: 10px; color: #888; cursor: pointer;
+/* ── Header icon toolbar ── */
+.header-tools {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  display: flex; gap: 6px; align-items: center;
+}
+.tool-btn {
+  width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--white); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: all 0.15s; padding: 0;
+}
+.tool-btn svg { width: 15px; height: 15px; }
+.tool-btn:hover { border-color: #999; background: #f0efec; }
+.tool-btn.active { background: var(--navy); border-color: var(--navy); }
+.tool-btn.active svg { stroke: #fff; fill: none; }
+.tool-btn.pen-active { background: var(--red); border-color: var(--red); }
+.tool-btn.pen-active svg { stroke: #fff; }
+
+/* ── Editor panel ── */
+#editor-panel {
+  position: fixed; top: 0; right: -420px; width: 400px; bottom: 52px;
+  background: var(--white); border-left: 1px solid var(--border);
+  box-shadow: -4px 0 20px rgba(0,0,0,0.08); z-index: 500;
+  transition: right 0.3s ease; display: flex; flex-direction: column;
   font-family: var(--sans);
 }
-.slide-header .reset-btn:hover { border-color: #888; color: #333; }
+#editor-panel.open { right: 0; }
+.editor-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.editor-header h2 {
+  font-family: var(--serif); font-size: 16px; font-weight: 400; color: var(--navy);
+}
+.editor-close {
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+  background: none; cursor: pointer; font-size: 16px; color: #888;
+  display: flex; align-items: center; justify-content: center;
+}
+.editor-close:hover { background: #f0efec; color: #333; }
+.editor-body {
+  flex: 1; overflow-y: auto; padding: 12px 16px;
+}
+.editor-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; margin-bottom: 10px;
+}
+.editor-card-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.editor-card-header input {
+  flex: 1; font-family: var(--sans); font-size: 12px; font-weight: 600;
+  color: var(--navy); border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 8px; background: var(--white);
+}
+.editor-card-header input:focus { outline: none; border-color: var(--orange); }
+.editor-delete-card {
+  width: 24px; height: 24px; border-radius: 4px; border: none;
+  background: none; cursor: pointer; color: #ccc; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.editor-delete-card:hover { color: var(--red); background: #fff0f0; }
+.editor-bullets { list-style: none; padding: 0; }
+.editor-bullet-row {
+  display: flex; align-items: center; gap: 4px; margin-bottom: 4px;
+}
+.editor-bullet-row input {
+  flex: 1; font-family: var(--sans); font-size: 11px; color: #333;
+  border: 1px solid var(--border); border-radius: 4px; padding: 3px 7px;
+  background: var(--white);
+}
+.editor-bullet-row input:focus { outline: none; border-color: var(--orange); }
+.editor-remove-bullet {
+  width: 20px; height: 20px; border: none; background: none;
+  cursor: pointer; color: #ccc; font-size: 12px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.editor-remove-bullet:hover { color: var(--red); }
+.editor-add-bullet {
+  font-family: var(--sans); font-size: 10px; color: var(--orange);
+  background: none; border: none; cursor: pointer; padding: 2px 0;
+  font-weight: 500;
+}
+.editor-add-bullet:hover { text-decoration: underline; }
+.editor-footer {
+  padding: 12px 16px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px;
+}
+.editor-footer button {
+  font-family: var(--sans); font-size: 11px; font-weight: 500;
+  padding: 7px 16px; border-radius: 6px; cursor: pointer;
+  letter-spacing: 0.03em;
+}
+.editor-save {
+  background: var(--orange); color: #fff; border: none;
+}
+.editor-save:hover { background: #e55500; }
+.editor-add-group {
+  background: none; border: 1px solid var(--border); color: var(--navy);
+}
+.editor-add-group:hover { background: var(--bg); }
+.editor-reset {
+  background: none; border: 1px solid var(--border); color: #888;
+  margin-left: auto;
+}
+.editor-reset:hover { border-color: #999; color: #333; }
 
 
 /* ════════════════════════════════════════════════
@@ -247,15 +345,6 @@ html, body {
   to { stroke-dashoffset: 0; }
 }
 
-.slide-header .circle-btn {
-  position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
-  background: var(--orange); border: none; border-radius: 5px;
-  padding: 5px 12px; font-size: 10px; color: #fff; cursor: pointer;
-  font-family: var(--sans); font-weight: 500; letter-spacing: 0.03em;
-  transition: background 0.15s;
-}
-.slide-header .circle-btn:hover { background: #e55500; }
-.slide-header .circle-btn.active { background: var(--navy); }
 
 
 /* ════════════════════════════════════════════════
@@ -378,10 +467,19 @@ html, body {
      ══════════════════════════ -->
 <div id="s1" class="slide active">
   <div class="slide-header">
-    <button class="circle-btn" id="circle-toggle" onclick="toggleCircle()">Show opportunity</button>
     <h1>PSM Activity Map</h1>
     <p>Where PSM time is being spent today</p>
-    <button class="reset-btn" onclick="resetCards()">Reset layout</button>
+    <div class="header-tools">
+      <button class="tool-btn" id="pen-toggle" onclick="toggleCircle()" title="Circle low-value groups">
+        <svg viewBox="0 0 16 16" fill="none" stroke="#666" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 1.5l3 3L5 14H2v-3z"/><path d="M9.5 3.5l3 3"/></svg>
+      </button>
+      <button class="tool-btn" id="gear-toggle" onclick="toggleEditor()" title="Edit groups & activities">
+        <svg viewBox="0 0 16 16" fill="none" stroke="#666" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M2.9 2.9l1.1 1.1M12 12l1.1 1.1M13.1 2.9L12 4M4 12l-1.1 1.1"/></svg>
+      </button>
+      <button class="tool-btn" onclick="resetCards()" title="Reset layout">
+        <svg viewBox="0 0 16 16" fill="none" stroke="#666" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a6 6 0 0 1 10.3-4.1"/><path d="M14 8a6 6 0 0 1-10.3 4.1"/><polyline points="12 1 13 4 10 4"/><polyline points="4 12 3 15 6 15"/></svg>
+      </button>
+    </div>
   </div>
   <div class="quad-layout">
     <div class="y-col">
@@ -676,6 +774,20 @@ html, body {
   </div>
 </div>
 
+<!-- ══════════ EDITOR PANEL ══════════ -->
+<div id="editor-panel">
+  <div class="editor-header">
+    <h2>Edit Groups</h2>
+    <button class="editor-close" onclick="toggleEditor()">&times;</button>
+  </div>
+  <div class="editor-body" id="editor-body"></div>
+  <div class="editor-footer">
+    <button class="editor-save" onclick="applyEdits()">Apply</button>
+    <button class="editor-add-group" onclick="addGroup()">+ Add group</button>
+    <button class="editor-reset" onclick="resetEdits()">Reset</button>
+  </div>
+</div>
+
 <!-- ══════════ NAV BAR ══════════ -->
 <div id="nav">
   <div class="nav-left">
@@ -722,22 +834,144 @@ let circleVisible = false;
 
 function toggleCircle() {
   circleVisible = !circleVisible;
-  const btn = document.getElementById('circle-toggle');
+  const btn = document.getElementById('pen-toggle');
   const svg = document.getElementById('circle-overlay');
   const label = document.getElementById('auto-label');
   if (circleVisible) {
     drawCircle();
     positionLabel();
-    btn.textContent = 'Hide opportunity';
-    btn.classList.add('active');
+    btn.classList.add('pen-active');
   } else {
-    // fade out paths then clear
     svg.style.opacity = '0';
     label.classList.remove('visible');
     setTimeout(() => { svg.innerHTML = ''; svg.style.opacity = ''; }, 350);
-    btn.textContent = 'Show opportunity';
+    btn.classList.remove('pen-active');
+  }
+}
+
+/* ══ Editor panel ══ */
+let editorOpen = false;
+const CARDS_STORAGE = 'psm-cards-v1';
+// Default icon for new groups
+const DEFAULT_ICON = `<svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="white" stroke-width="1.4"/></svg>`;
+
+function loadCards() {
+  try { const s = localStorage.getItem(CARDS_STORAGE); if (s) return JSON.parse(s); } catch {}
+  return null;
+}
+function saveCards() {
+  try { localStorage.setItem(CARDS_STORAGE, JSON.stringify(CARDS)); } catch {}
+}
+
+function toggleEditor() {
+  editorOpen = !editorOpen;
+  const panel = document.getElementById('editor-panel');
+  const btn = document.getElementById('gear-toggle');
+  if (editorOpen) {
+    renderEditor();
+    panel.classList.add('open');
+    btn.classList.add('active');
+  } else {
+    panel.classList.remove('open');
     btn.classList.remove('active');
   }
+}
+
+function renderEditor() {
+  const body = document.getElementById('editor-body');
+  body.innerHTML = CARDS.map((c, ci) => `
+    <div class="editor-card" data-idx="${ci}">
+      <div class="editor-card-header">
+        <input type="text" value="${c.title.replace(/"/g,'&quot;')}" data-field="title" data-idx="${ci}">
+        <button class="editor-delete-card" onclick="deleteGroup(${ci})" title="Delete group">&times;</button>
+      </div>
+      <div class="editor-bullets">
+        ${c.bullets.map((b, bi) => `
+          <div class="editor-bullet-row">
+            <input type="text" value="${b.replace(/"/g,'&quot;')}" data-field="bullet" data-ci="${ci}" data-bi="${bi}">
+            <button class="editor-remove-bullet" onclick="removeBullet(${ci},${bi})" title="Remove">&times;</button>
+          </div>
+        `).join('')}
+      </div>
+      <button class="editor-add-bullet" onclick="addBullet(${ci})">+ Add activity</button>
+    </div>
+  `).join('');
+}
+
+function addBullet(ci) {
+  CARDS[ci].bullets.push('New activity');
+  renderEditor();
+  // Focus the new input
+  const inputs = document.querySelectorAll(`[data-ci="${ci}"][data-field="bullet"]`);
+  const last = inputs[inputs.length - 1];
+  if (last) { last.focus(); last.select(); }
+}
+
+function removeBullet(ci, bi) {
+  CARDS[ci].bullets.splice(bi, 1);
+  renderEditor();
+}
+
+function deleteGroup(ci) {
+  if (!confirm(`Delete "${CARDS[ci].title}"?`)) return;
+  // Remove card DOM element
+  const el = document.getElementById('card-' + CARDS[ci].id + '-s1');
+  if (el) el.remove();
+  CARDS.splice(ci, 1);
+  renderEditor();
+}
+
+function addGroup() {
+  const id = 'group-' + Date.now();
+  CARDS.push({
+    id, title: 'New Group', px: 40, py: 40,
+    icon: DEFAULT_ICON,
+    bullets: ['Activity 1']
+  });
+  renderEditor();
+  // Scroll to bottom & focus
+  const body = document.getElementById('editor-body');
+  body.scrollTop = body.scrollHeight;
+  const cards = body.querySelectorAll('.editor-card');
+  const last = cards[cards.length - 1];
+  if (last) { const inp = last.querySelector('input'); inp.focus(); inp.select(); }
+}
+
+function readEditorValues() {
+  document.querySelectorAll('#editor-body [data-field="title"]').forEach(inp => {
+    CARDS[parseInt(inp.dataset.idx)].title = inp.value.trim() || 'Untitled';
+  });
+  document.querySelectorAll('#editor-body [data-field="bullet"]').forEach(inp => {
+    const ci = parseInt(inp.dataset.ci), bi = parseInt(inp.dataset.bi);
+    CARDS[ci].bullets[bi] = inp.value.trim();
+  });
+  // Remove empty bullets
+  CARDS.forEach(c => { c.bullets = c.bullets.filter(b => b.length > 0); });
+}
+
+function applyEdits() {
+  readEditorValues();
+  saveCards();
+  rebuildChart();
+  showToast('Groups updated');
+}
+
+function resetEdits() {
+  if (!confirm('Reset all groups to defaults?')) return;
+  try { localStorage.removeItem(CARDS_STORAGE); localStorage.removeItem(STORAGE_KEY); } catch {}
+  // Restore CARDS from DEFAULT_CARDS
+  CARDS.length = 0;
+  DEFAULT_CARDS.forEach(c => CARDS.push({ ...c, bullets: [...c.bullets] }));
+  rebuildChart();
+  if (editorOpen) renderEditor();
+  showToast('Groups reset to defaults');
+}
+
+function rebuildChart() {
+  const chartEl = document.getElementById('chart1');
+  // Remove existing cards
+  chartEl.querySelectorAll('.card').forEach(el => el.remove());
+  buildCards(chartEl, '-s1');
 }
 
 // Keyboard navigation
@@ -748,7 +982,7 @@ document.addEventListener('keydown', e => {
 
 
 /* ══ CARDS — shared data ══ */
-const CARDS = [
+const DEFAULT_CARDS = [
   { id:"admin-ops",          title:"Admin & Ops",             px:2,  py:68,
     icon:`<svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="2" rx="1" fill="white"/><rect x="1" y="7" width="14" height="2" rx="1" fill="white"/><rect x="1" y="11" width="14" height="2" rx="1" fill="white"/></svg>`,
     bullets:["Password resets","Demo provisioning","Seismic & LMS uploads","Portal access requests","License management","Status reports"]},
@@ -795,6 +1029,15 @@ const CARDS = [
     icon:`<svg viewBox="0 0 16 16" fill="none"><path d="M3 2h10v13H3z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 2V0h4v2" stroke="white" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 9l2 2.5 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     bullets:["Pre-project team enablement","Solutioning & delivery reviews","Live project quality oversight"]},
 ];
+
+// Load saved card edits or clone defaults
+const CARDS = (function() {
+  try {
+    const s = localStorage.getItem('psm-cards-v1');
+    if (s) return JSON.parse(s);
+  } catch {}
+  return DEFAULT_CARDS.map(c => ({ ...c, bullets: [...c.bullets] }));
+})();
 
 const STORAGE_KEY = 'psm-activity-map-v1';
 let toastTimer;
@@ -858,7 +1101,7 @@ function makeDraggable(card, handle, chartEl, cardId) {
 }
 
 function resetCards() {
-  if (!confirm('Reset all cards to default positions?')) return;
+  if (!confirm('Reset card positions to defaults?')) return;
   try { localStorage.removeItem(STORAGE_KEY); } catch {}
   const chartEl = document.getElementById('chart1');
   if (!chartEl) return;
