@@ -351,9 +351,12 @@ html, body {
 /* ════════════════════════════════════════════════
    SLIDE 3 — Partner & Practitioner Journeys
    ════════════════════════════════════════════════ */
-#s3 { background: var(--bg); overflow-y: auto; }
+#s3 { background: var(--bg); overflow: hidden; }
 
-.s3-body { display: grid; grid-template-columns: 280px 1fr; gap: 16px; padding: 16px 20px 20px; }
+.s3-body {
+  display: grid; grid-template-columns: 280px 1fr; gap: 16px; padding: 16px 20px 20px;
+  height: calc(100vh - 52px - 64px); /* nav + header */
+}
 
 .section-label {
   font-size: 9px; font-weight: bold; letter-spacing: 0.12em; color: var(--navy);
@@ -363,12 +366,17 @@ html, body {
 .section-label .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
 
 /* Left activities column */
-.activities-col { display: flex; flex-direction: column; }
+.activities-col { display: flex; flex-direction: column; overflow-y: auto; min-height: 0; }
 .activity-card {
   background: white; border-left: 3px solid var(--navy);
   border-radius: 0 6px 6px 0; padding: 10px 12px; margin-bottom: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07); cursor: pointer;
+  transition: border-left-color 0.15s, background 0.15s;
 }
+.activity-card:hover { background: #fafafa; }
+.activity-card.selected { border-left-color: var(--orange); background: #fff8f4; }
+.activity-card.selected .act-title { color: #c44e00; }
+.activity-card.selected .act-icon { background: var(--orange); }
 .activity-card .act-header { display: flex; align-items: center; gap: 9px; margin-bottom: 5px; }
 .act-icon {
   width: 28px; height: 28px; border-radius: 50%; background: #0C447C;
@@ -383,9 +391,11 @@ html, body {
 .activity-card.highlight .act-title { color: #c44e00; }
 .activity-card.highlight .act-icon  { background: var(--orange); }
 
-/* Right journey panels */
-.journeys-col { display: flex; flex-direction: column; gap: 14px; }
+/* Right detail panels */
+.journeys-col { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; min-height: 0; }
 .journey-panel { background: white; border-radius: 8px; padding: 16px 18px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+.detail-panel { display: none; }
+.detail-panel.active { display: block; }
 
 .stages-row {
   display: flex; align-items: center; gap: 0;
@@ -519,11 +529,11 @@ html, body {
   </div>
 
   <div class="s3-body">
-    <!-- Left activities -->
+    <!-- Left activities (scrollable nav) -->
     <div class="activities-col">
       <div class="section-label"><div class="dot"></div>Strategic PSM Activities</div>
 
-      <div class="activity-card highlight">
+      <div class="activity-card selected" data-panel="panel-partner-journey" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="13" r="2" fill="white"/><circle cx="8" cy="8" r="2" fill="white"/><circle cx="13" cy="3" r="2" fill="white"/><line x1="5" y1="11" x2="6" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="6" x2="11" y2="5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
           <div class="act-title">Partner Journey Management</div>
@@ -531,7 +541,7 @@ html, body {
         <ul class="act-bullets"><li>Tier progression &amp; maturity assessment</li><li>Quarterly business reviews</li><li>Individual practitioner coaching</li></ul>
       </div>
 
-      <div class="activity-card highlight">
+      <div class="activity-card" data-panel="panel-delivery-quality" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M3 2h10v13H3z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 2V0h4v2" stroke="white" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 9l2 2.5 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <div class="act-title">Delivery Prep &amp; Quality</div>
@@ -539,7 +549,7 @@ html, body {
         <ul class="act-bullets"><li>Pre-project team enablement</li><li>Solutioning &amp; delivery reviews</li><li>Live project quality oversight</li></ul>
       </div>
 
-      <div class="activity-card">
+      <div class="activity-card" data-panel="panel-exec-engagement" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1l1.5 4.5H15l-4 3 1.5 4.5L8 10.5l-4.5 2.5L5 8.5l-4-3h5.5z" fill="white"/></svg></div>
           <div class="act-title">Executive Engagement</div>
@@ -547,7 +557,7 @@ html, body {
         <ul class="act-bullets"><li>Client project oversight</li><li>Co-selling &amp; exec alignment</li></ul>
       </div>
 
-      <div class="activity-card">
+      <div class="activity-card" data-panel="panel-early-release" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1Q14 4 14 8L11 13H5L2 8Q2 4 8 1Z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="7" r="2" stroke="white" stroke-width="1.2"/></svg></div>
           <div class="act-title">Early Release Programs</div>
@@ -555,7 +565,7 @@ html, body {
         <ul class="act-bullets"><li>Beta access coordination</li><li>Partner feedback loops to product</li><li>Roadmap influence &amp; advocacy</li></ul>
       </div>
 
-      <div class="activity-card">
+      <div class="activity-card" data-panel="panel-partner-apps" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="white" stroke-width="1.4"/><path d="M1 15c0-4 10-4 10 0" stroke="white" stroke-width="1.4" stroke-linecap="round"/><line x1="13" y1="7" x2="13" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="10" x2="16" y2="10" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div>
           <div class="act-title">Partner Applications</div>
@@ -563,7 +573,7 @@ html, body {
         <ul class="act-bullets"><li>Strategic partner evaluation</li><li>Onboarding white-glove partners</li></ul>
       </div>
 
-      <div class="activity-card">
+      <div class="activity-card" data-panel="panel-delivery-readiness" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="2.5" stroke="white" stroke-width="1.4"/><path d="M4 8l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <div class="act-title">Delivery Readiness</div>
@@ -571,7 +581,7 @@ html, body {
         <ul class="act-bullets"><li>Pre-project team enablement</li><li>Solutioning reviews</li></ul>
       </div>
 
-      <div class="activity-card">
+      <div class="activity-card" data-panel="panel-content-enablement" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1Q13 1 13 6Q13 10 10 12V14H6V12Q3 10 3 6Q3 1 8 1Z" stroke="white" stroke-width="1.4"/><line x1="6" y1="14" x2="10" y2="14" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="16" x2="9" y2="16" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
           <div class="act-title">Content Enablement</div>
@@ -579,7 +589,7 @@ html, body {
         <ul class="act-bullets"><li>Curate &amp; share resources</li><li>Partner portal updates</li></ul>
       </div>
 
-      <div class="activity-card">
+      <div class="activity-card" data-panel="panel-proactive-comms" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="10" rx="2" stroke="white" stroke-width="1.4"/><path d="M1 4l7 6 7-6" stroke="white" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
           <div class="act-title">Proactive Comms</div>
@@ -587,7 +597,7 @@ html, body {
         <ul class="act-bullets"><li>Release notes &amp; partner updates</li><li>Training reminders</li></ul>
       </div>
 
-      <div class="activity-card">
+      <div class="activity-card" data-panel="panel-individual-journeys" onclick="showPanel(this)">
         <div class="act-header">
           <div class="act-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="5" cy="4" r="2.5" stroke="white" stroke-width="1.3"/><path d="M0.5 12c0-3 9-3 9 0" stroke="white" stroke-width="1.3" stroke-linecap="round"/><circle cx="12" cy="5" r="2" stroke="white" stroke-width="1.3"/><path d="M8.5 12c0-2.5 7-2.5 7 0" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg></div>
           <div class="act-title">Individual Journeys</div>
@@ -596,96 +606,216 @@ html, body {
       </div>
     </div>
 
-    <!-- Right journeys -->
+    <!-- Right detail panels -->
     <div class="journeys-col">
-      <!-- Partner maturity -->
-      <div class="journey-panel">
-        <div class="section-label"><div class="dot"></div>Partner Maturity Journey — Org Level</div>
-        <div class="stages-row">
-          <div class="stage-card s1c">
-            <div class="stage-num">Stage 1</div>
-            <div class="stage-icon-wrap">🚩</div>
-            <div class="stage-name">Onboarded</div>
-            <ul class="stage-criteria"><li>Contract signed</li><li>Portal access granted</li><li>Kick-off completed</li></ul>
-            <div class="psm-role">PSM: High touch</div>
+
+      <!-- Partner Journey Management -->
+      <div id="panel-partner-journey" class="detail-panel active">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Partner Maturity Journey — Org Level</div>
+          <div class="stages-row">
+            <div class="stage-card s1c">
+              <div class="stage-num">Stage 1</div>
+              <div class="stage-icon-wrap">🚩</div>
+              <div class="stage-name">Onboarded</div>
+              <ul class="stage-criteria"><li>Contract signed</li><li>Portal access granted</li><li>Kick-off completed</li></ul>
+              <div class="psm-role">PSM: High touch</div>
+            </div>
+            <div class="stage-connector"><div class="arrow">›</div><div class="req">6 criteria</div></div>
+            <div class="stage-card s2c">
+              <div class="stage-num">Stage 2</div>
+              <div class="stage-icon-wrap">🎓</div>
+              <div class="stage-name">Enabled</div>
+              <ul class="stage-criteria"><li>Core certs achieved</li><li>Demo capability live</li><li>First deal registered</li></ul>
+              <div class="psm-role">PSM: Coaching</div>
+            </div>
+            <div class="stage-connector"><div class="arrow">›</div><div class="req">8 criteria</div></div>
+            <div class="stage-card s3c">
+              <div class="stage-num">Stage 3</div>
+              <div class="stage-icon-wrap">📈</div>
+              <div class="stage-name">Performing</div>
+              <ul class="stage-criteria"><li>2+ live deliveries</li><li>CSAT ≥ 4.0</li><li>Pipeline active</li></ul>
+              <div class="psm-role">PSM: QBRs</div>
+            </div>
+            <div class="stage-connector"><div class="arrow">›</div><div class="req">8 criteria</div></div>
+            <div class="stage-card s4c">
+              <div class="stage-num">Stage 4</div>
+              <div class="stage-icon-wrap">🚀</div>
+              <div class="stage-name">Accelerating</div>
+              <ul class="stage-criteria"><li>Co-sell active</li><li>CoE established</li><li>Multi-product</li></ul>
+              <div class="psm-role">PSM: GTM align</div>
+            </div>
+            <div class="stage-connector"><div class="arrow">›</div><div class="req">10 criteria</div></div>
+            <div class="stage-card s5c">
+              <div class="stage-num">Stage 5</div>
+              <div class="stage-icon-wrap">👑</div>
+              <div class="stage-name">Strategic</div>
+              <ul class="stage-criteria"><li>Top 10 partner</li><li>Exec sponsorship</li><li>Joint roadmap</li></ul>
+              <div class="psm-role">PSM: Strategic</div>
+            </div>
           </div>
-          <div class="stage-connector"><div class="arrow">›</div><div class="req">6 criteria</div></div>
-          <div class="stage-card s2c">
-            <div class="stage-num">Stage 2</div>
-            <div class="stage-icon-wrap">🎓</div>
-            <div class="stage-name">Enabled</div>
-            <ul class="stage-criteria"><li>Core certs achieved</li><li>Demo capability live</li><li>First deal registered</li></ul>
-            <div class="psm-role">PSM: Coaching</div>
-          </div>
-          <div class="stage-connector"><div class="arrow">›</div><div class="req">8 criteria</div></div>
-          <div class="stage-card s3c">
-            <div class="stage-num">Stage 3</div>
-            <div class="stage-icon-wrap">📈</div>
-            <div class="stage-name">Performing</div>
-            <ul class="stage-criteria"><li>2+ live deliveries</li><li>CSAT ≥ 4.0</li><li>Pipeline active</li></ul>
-            <div class="psm-role">PSM: QBRs</div>
-          </div>
-          <div class="stage-connector"><div class="arrow">›</div><div class="req">8 criteria</div></div>
-          <div class="stage-card s4c">
-            <div class="stage-num">Stage 4</div>
-            <div class="stage-icon-wrap">🚀</div>
-            <div class="stage-name">Accelerating</div>
-            <ul class="stage-criteria"><li>Co-sell active</li><li>CoE established</li><li>Multi-product</li></ul>
-            <div class="psm-role">PSM: GTM align</div>
-          </div>
-          <div class="stage-connector"><div class="arrow">›</div><div class="req">10 criteria</div></div>
-          <div class="stage-card s5c">
-            <div class="stage-num">Stage 5</div>
-            <div class="stage-icon-wrap">👑</div>
-            <div class="stage-name">Strategic</div>
-            <ul class="stage-criteria"><li>Top 10 partner</li><li>Exec sponsorship</li><li>Joint roadmap</li></ul>
-            <div class="psm-role">PSM: Strategic</div>
+        </div>
+        <div class="journey-panel" style="margin-top:14px">
+          <div class="section-label"><div class="dot"></div>Practitioner Development Journey — Individual Level</div>
+          <div class="ind-stages-row">
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#e5e7eb;">👤</div>
+              <div class="ind-stage-name">Aware</div>
+              <div class="ind-stage-desc">Knows Anaplan exists. No formal training.</div>
+              <span class="psm-touchpoint passive">Self-serve</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#BFDBFE;">📚</div>
+              <div class="ind-stage-name">Learning</div>
+              <div class="ind-stage-desc">Enrolled in LMS. Pursuing L1 cert.</div>
+              <span class="psm-touchpoint passive">Automated</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#BBF7D0;">✅</div>
+              <div class="ind-stage-name">Certified</div>
+              <div class="ind-stage-desc">L1/L2 cert achieved. Ready to deliver.</div>
+              <span class="psm-touchpoint">PSM: Activate</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#FDE68A;">🔨</div>
+              <div class="ind-stage-name">Practising</div>
+              <div class="ind-stage-desc">On active projects. Building real experience.</div>
+              <span class="psm-touchpoint">PSM: Coach</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#FECDD3;">⭐</div>
+              <div class="ind-stage-name">Expert</div>
+              <div class="ind-stage-desc">L3 cert. Leads delivery. Mentors others.</div>
+              <span class="psm-touchpoint">PSM: Champion</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#DDD6FE;">🏆</div>
+              <div class="ind-stage-name">Ambassador</div>
+              <div class="ind-stage-desc">Internal advocate. Drives pipeline &amp; CoE.</div>
+              <span class="psm-touchpoint">PSM: Partner</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Practitioner journey -->
-      <div class="journey-panel">
-        <div class="section-label"><div class="dot"></div>Practitioner Development Journey — Individual Level</div>
-        <div class="ind-stages-row">
-          <div class="ind-stage">
-            <div class="ind-badge" style="background:#e5e7eb;">👤</div>
-            <div class="ind-stage-name">Aware</div>
-            <div class="ind-stage-desc">Knows Anaplan exists. No formal training.</div>
-            <span class="psm-touchpoint passive">Self-serve</span>
-          </div>
-          <div class="ind-stage">
-            <div class="ind-badge" style="background:#BFDBFE;">📚</div>
-            <div class="ind-stage-name">Learning</div>
-            <div class="ind-stage-desc">Enrolled in LMS. Pursuing L1 cert.</div>
-            <span class="psm-touchpoint passive">Automated</span>
-          </div>
-          <div class="ind-stage">
-            <div class="ind-badge" style="background:#BBF7D0;">✅</div>
-            <div class="ind-stage-name">Certified</div>
-            <div class="ind-stage-desc">L1/L2 cert achieved. Ready to deliver.</div>
-            <span class="psm-touchpoint">PSM: Activate</span>
-          </div>
-          <div class="ind-stage">
-            <div class="ind-badge" style="background:#FDE68A;">🔨</div>
-            <div class="ind-stage-name">Practising</div>
-            <div class="ind-stage-desc">On active projects. Building real experience.</div>
-            <span class="psm-touchpoint">PSM: Coach</span>
-          </div>
-          <div class="ind-stage">
-            <div class="ind-badge" style="background:#FECDD3;">⭐</div>
-            <div class="ind-stage-name">Expert</div>
-            <div class="ind-stage-desc">L3 cert. Leads delivery. Mentors others.</div>
-            <span class="psm-touchpoint">PSM: Champion</span>
-          </div>
-          <div class="ind-stage">
-            <div class="ind-badge" style="background:#DDD6FE;">🏆</div>
-            <div class="ind-stage-name">Ambassador</div>
-            <div class="ind-stage-desc">Internal advocate. Drives pipeline &amp; CoE.</div>
-            <span class="psm-touchpoint">PSM: Partner</span>
+      <!-- Delivery Prep & Quality -->
+      <div id="panel-delivery-quality" class="detail-panel">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Delivery Prep &amp; Quality</div>
+          <p style="font-size:12px;color:var(--navy);line-height:1.7;margin-top:8px">PSMs ensure delivery teams are fully prepared before project kickoff and maintain quality oversight throughout. This includes pre-project enablement sessions, solutioning reviews with the partner team, and ongoing delivery health checks to protect CSAT scores.</p>
+          <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">PRE-PROJECT</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› Team skill assessment</li><li>› Enablement gap analysis</li><li>› Solutioning review</li></ul></div>
+            <div style="flex:1;min-width:180px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">DURING DELIVERY</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› Weekly quality check-ins</li><li>› Escalation management</li><li>› Delivery milestone tracking</li></ul></div>
+            <div style="flex:1;min-width:180px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">POST-PROJECT</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› CSAT collection</li><li>› Lessons learned</li><li>› Capability updates</li></ul></div>
           </div>
         </div>
       </div>
+
+      <!-- Executive Engagement -->
+      <div id="panel-exec-engagement" class="detail-panel">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Executive Engagement</div>
+          <p style="font-size:12px;color:var(--navy);line-height:1.7;margin-top:8px">PSMs facilitate strategic alignment between partner executives and Anaplan leadership. This includes co-selling motions, executive sponsorship alignment, and ensuring partner leadership has visibility into pipeline and delivery performance.</p>
+          <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">KEY ACTIVITIES</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› Client project oversight</li><li>› Co-selling &amp; exec alignment</li><li>› QBR executive summaries</li><li>› Strategic account planning</li></ul></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Early Release Programs -->
+      <div id="panel-early-release" class="detail-panel">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Early Release Programs</div>
+          <p style="font-size:12px;color:var(--navy);line-height:1.7;margin-top:8px">PSMs coordinate partner access to beta features and early releases, capturing structured feedback that flows back to product teams. This creates a virtuous cycle: partners gain competitive advantage, and Anaplan gets real-world validation before GA.</p>
+          <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">KEY ACTIVITIES</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› Beta access coordination</li><li>› Partner feedback loops to product</li><li>› Roadmap influence &amp; advocacy</li><li>› Early adopter enablement</li></ul></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partner Applications -->
+      <div id="panel-partner-apps" class="detail-panel">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Partner Applications</div>
+          <p style="font-size:12px;color:var(--navy);line-height:1.7;margin-top:8px">PSMs evaluate and onboard strategic partners through a structured application process, ensuring new partners have the right capabilities, market focus, and commitment level to succeed in the ecosystem.</p>
+          <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">KEY ACTIVITIES</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› Strategic partner evaluation</li><li>› Onboarding white-glove partners</li><li>› Capability assessment</li><li>› Market fit analysis</li></ul></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delivery Readiness -->
+      <div id="panel-delivery-readiness" class="detail-panel">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Delivery Readiness</div>
+          <p style="font-size:12px;color:var(--navy);line-height:1.7;margin-top:8px">PSMs assess and ensure partner teams are fully prepared to deliver before projects begin, including certification verification, team composition review, and solutioning alignment.</p>
+          <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">KEY ACTIVITIES</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› Pre-project team enablement</li><li>› Solutioning reviews</li><li>› Certification verification</li><li>› Team composition assessment</li></ul></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Enablement -->
+      <div id="panel-content-enablement" class="detail-panel">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Content Enablement</div>
+          <p style="font-size:12px;color:var(--navy);line-height:1.7;margin-top:8px">PSMs curate and distribute enablement resources to partners, keeping the partner portal up to date and ensuring partners have access to the latest playbooks, templates, and best practices.</p>
+          <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">KEY ACTIVITIES</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› Curate &amp; share resources</li><li>› Partner portal updates</li><li>› Playbook maintenance</li><li>› Best practice distribution</li></ul></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Proactive Comms -->
+      <div id="panel-proactive-comms" class="detail-panel">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Proactive Comms</div>
+          <p style="font-size:12px;color:var(--navy);line-height:1.7;margin-top:8px">PSMs drive proactive communication to partners including release notes, product updates, training reminders, and event notifications — keeping partners informed and engaged without requiring 1:1 outreach.</p>
+          <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;background:var(--bg);border-radius:8px;padding:12px"><div style="font-size:10px;font-weight:bold;color:var(--navy);margin-bottom:6px">KEY ACTIVITIES</div><ul style="list-style:none;padding:0;font-size:10px;color:#555;line-height:1.8"><li>› Release notes &amp; partner updates</li><li>› Training reminders</li><li>› Event notifications</li><li>› Newsletter curation</li></ul></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Individual Journeys -->
+      <div id="panel-individual-journeys" class="detail-panel">
+        <div class="journey-panel">
+          <div class="section-label"><div class="dot"></div>Individual Journeys — Certification Paths</div>
+          <div class="ind-stages-row">
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#BFDBFE;">🔧</div>
+              <div class="ind-stage-name">Model Builder</div>
+              <div class="ind-stage-desc">Core platform modeling skills. Foundation certification.</div>
+              <span class="psm-touchpoint">PSM: Enable</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#BBF7D0;">🏗️</div>
+              <div class="ind-stage-name">Solution Architect</div>
+              <div class="ind-stage-desc">End-to-end solution design. Advanced certification.</div>
+              <span class="psm-touchpoint">PSM: Coach</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#FDE68A;">👑</div>
+              <div class="ind-stage-name">Master Anaplanner</div>
+              <div class="ind-stage-desc">Expert-level platform mastery. Elite certification.</div>
+              <span class="psm-touchpoint">PSM: Champion</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#FECDD3;">💼</div>
+              <div class="ind-stage-name">Sales</div>
+              <div class="ind-stage-desc">Sales methodology &amp; positioning. GTM certification.</div>
+              <span class="psm-touchpoint">PSM: Align</span>
+            </div>
+            <div class="ind-stage">
+              <div class="ind-badge" style="background:#DDD6FE;">🎯</div>
+              <div class="ind-stage-name">Pre-Sales</div>
+              <div class="ind-stage-desc">Demo &amp; discovery skills. Technical sales certification.</div>
+              <span class="psm-touchpoint">PSM: Activate</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1276,6 +1406,18 @@ function drawCircle() {
 
 function positionLabel() {
   // Label is now positioned dynamically in drawCircle()
+}
+
+/* ══ Slide 3 panel switching ══ */
+function showPanel(cardEl) {
+  // Deselect all activity cards
+  document.querySelectorAll('#s3 .activity-card').forEach(c => c.classList.remove('selected'));
+  cardEl.classList.add('selected');
+  // Hide all detail panels, show the selected one
+  document.querySelectorAll('#s3 .detail-panel').forEach(p => p.classList.remove('active'));
+  const panelId = cardEl.dataset.panel;
+  const panel = document.getElementById(panelId);
+  if (panel) panel.classList.add('active');
 }
 
 /* ══ Slide 4 agent node info ══ */
