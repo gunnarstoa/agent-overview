@@ -1116,57 +1116,114 @@ function resetCards() {
   showToast('Layout reset');
 }
 
-/* ══ Circle overlay — powered by RoughJS ══ */
+/* ══ Freehand outline — powered by RoughJS ══ */
+
+// Convex hull (Andrew's monotone chain)
+function convexHull(points) {
+  const pts = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (pts.length <= 1) return pts;
+  const cross = (O, A, B) => (A[0]-O[0])*(B[1]-O[1]) - (A[1]-O[1])*(B[0]-O[0]);
+  const lower = [];
+  for (const p of pts) { while (lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], p) <= 0) lower.pop(); lower.push(p); }
+  const upper = [];
+  for (let i = pts.length - 1; i >= 0; i--) { const p = pts[i]; while (upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], p) <= 0) upper.pop(); upper.push(p); }
+  upper.pop(); lower.pop();
+  return lower.concat(upper);
+}
+
+// Expand hull outward by `pad` pixels
+function expandHull(hull, pad) {
+  const cx = hull.reduce((s, p) => s + p[0], 0) / hull.length;
+  const cy = hull.reduce((s, p) => s + p[1], 0) / hull.length;
+  return hull.map(p => {
+    const dx = p[0] - cx, dy = p[1] - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    return [p[0] + (dx / dist) * pad, p[1] + (dy / dist) * pad];
+  });
+}
+
+// Subdivide polygon for smoother curves (Chaikin's algorithm)
+function smoothPoly(pts, iterations) {
+  let p = pts;
+  for (let it = 0; it < iterations; it++) {
+    const next = [];
+    for (let i = 0; i < p.length; i++) {
+      const a = p[i], b = p[(i + 1) % p.length];
+      next.push([0.75 * a[0] + 0.25 * b[0], 0.75 * a[1] + 0.25 * b[1]]);
+      next.push([0.25 * a[0] + 0.75 * b[0], 0.25 * a[1] + 0.75 * b[1]]);
+    }
+    p = next;
+  }
+  return p;
+}
 
 function drawCircle() {
   const svg = document.getElementById('circle-overlay');
   const chartEl = document.getElementById('chart1');
   const W = chartEl.offsetWidth;
   const H = chartEl.offsetHeight;
+  const chartRect = chartEl.getBoundingClientRect();
 
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.innerHTML = '';
 
-  // Ellipse centered on the left-half quadrants (low-value area only)
-  const cx = W * 0.24;
-  const cy = H * 0.50;
-  const ellipseW = W * 0.48;   // full width of ellipse
-  const ellipseH = H * 0.88;   // full height of ellipse
+  // Gather bounding boxes of cards in the left half (low-value quadrants)
+  const cornerPts = [];
+  chartEl.querySelectorAll('.card').forEach(card => {
+    const r = card.getBoundingClientRect();
+    const x = r.left - chartRect.left;
+    const y = r.top - chartRect.top;
+    const cxCard = x + r.width / 2;
+    // Only include cards whose center is in the left half
+    if (cxCard < W * 0.50) {
+      cornerPts.push([x, y]);
+      cornerPts.push([x + r.width, y]);
+      cornerPts.push([x, y + r.height]);
+      cornerPts.push([x + r.width, y + r.height]);
+    }
+  });
 
-  // Use RoughJS to draw a clean, confident hand-drawn ellipse
+  if (cornerPts.length < 3) return;
+
+  // Build convex hull → expand → smooth
+  let hull = convexHull(cornerPts);
+  hull = expandHull(hull, 24);
+  hull = smoothPoly(hull, 3);
+
+  // Use RoughJS polygon to freehand-trace around the cards
   const rc = rough.svg(svg);
-  const node = rc.ellipse(cx, cy, ellipseW, ellipseH, {
+  const node = rc.polygon(hull, {
     stroke: '#c1121f',
     strokeWidth: 2.5,
-    roughness: 0.8,
-    bowing: 0.4,
+    roughness: 0.7,
+    bowing: 0.3,
     fill: 'none',
     seed: 42,
   });
 
-  // Extract paths from the RoughJS-generated group and animate them
+  // Animate the draw-on
   const paths = node.querySelectorAll('path');
   paths.forEach((path, i) => {
     const len = path.getTotalLength();
     path.style.strokeDasharray = len;
     path.style.strokeDashoffset = len;
-    path.style.animation = `rough-draw ${700 + i * 200}ms ease-out ${i * 120}ms forwards`;
+    path.style.animation = `rough-draw ${800 + i * 200}ms ease-out ${i * 100}ms forwards`;
   });
 
   svg.appendChild(node);
 
-  // Show label after the circle finishes drawing
+  // Position and show label below the hull
   const label = document.getElementById('auto-label');
-  const totalDur = 700 + (paths.length - 1) * 320;
+  const hullBottom = Math.max(...hull.map(p => p[1]));
+  const hullCx = hull.reduce((s, p) => s + p[0], 0) / hull.length;
+  label.style.left = (hullCx - 90) + 'px';
+  label.style.top = Math.min(hullBottom + 10, H - 30) + 'px';
+  const totalDur = 800 + (paths.length - 1) * 300;
   setTimeout(() => label.classList.add('visible'), totalDur);
 }
 
 function positionLabel() {
-  const chartEl = document.getElementById('chart1');
-  const W = chartEl.offsetWidth, H = chartEl.offsetHeight;
-  const lbl = document.getElementById('auto-label');
-  lbl.style.left = (W * 0.24 - 90) + 'px';
-  lbl.style.top = (H * 0.92) + 'px';
+  // Label is now positioned dynamically in drawCircle()
 }
 
 /* ══ Slide 4 agent node info ══ */
