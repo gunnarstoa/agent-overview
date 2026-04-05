@@ -1172,14 +1172,25 @@ function convexHull(points) {
   return lower.concat(upper);
 }
 
-// Expand hull outward by `pad` pixels
+// Expand hull outward by `pad` pixels using vertex normals
 function expandHull(hull, pad) {
-  const cx = hull.reduce((s, p) => s + p[0], 0) / hull.length;
-  const cy = hull.reduce((s, p) => s + p[1], 0) / hull.length;
-  return hull.map(p => {
-    const dx = p[0] - cx, dy = p[1] - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    return [p[0] + (dx / dist) * pad, p[1] + (dy / dist) * pad];
+  const n = hull.length;
+  return hull.map((p, i) => {
+    const prev = hull[(i - 1 + n) % n];
+    const next = hull[(i + 1) % n];
+    // Average the outward normals of the two adjacent edges
+    const dx1 = p[0] - prev[0], dy1 = p[1] - prev[1];
+    const dx2 = next[0] - p[0], dy2 = next[1] - p[1];
+    // Outward normals (assuming CCW winding from convex hull)
+    let nx = -(dy1 + dy2), ny = (dx1 + dx2);
+    const len = Math.sqrt(nx * nx + ny * ny) || 1;
+    nx /= len; ny /= len;
+    // Ensure outward direction by checking against centroid
+    const cx = hull.reduce((s, q) => s + q[0], 0) / n;
+    const cy = hull.reduce((s, q) => s + q[1], 0) / n;
+    const dot = (p[0] - cx) * nx + (p[1] - cy) * ny;
+    if (dot < 0) { nx = -nx; ny = -ny; }
+    return [p[0] + nx * pad, p[1] + ny * pad];
   });
 }
 
