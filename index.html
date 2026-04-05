@@ -217,20 +217,21 @@ html, body {
 
 
 /* ════════════════════════════════════════════════
-   Circle overlay (toggled on slide 1)
+   Circle overlay — RoughNotation-style draw-on
    ════════════════════════════════════════════════ */
 #circle-overlay {
   position: absolute; inset: 0; width: 100%; height: 100%;
   pointer-events: none; z-index: 20;
-  opacity: 0; transition: opacity 0.4s ease;
+  transition: opacity 0.35s ease;
 }
-#circle-overlay.visible { opacity: 1; }
+#circle-overlay path {
+  fill: none; stroke: var(--red); stroke-linecap: round; stroke-linejoin: round;
+}
 #auto-label {
   position: absolute; pointer-events: none; z-index: 25;
-  opacity: 0; transition: opacity 0.4s ease 0.5s;
+  opacity: 0; transition: opacity 0.35s ease;
 }
 #auto-label.visible { opacity: 1; }
-@keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
 #auto-label .pill {
   background: var(--red); color: white; font-size: 12px; font-weight: bold;
   padding: 6px 14px; border-radius: 20px; white-space: nowrap;
@@ -242,8 +243,9 @@ html, body {
   font-weight: 500; letter-spacing: 0.02em;
 }
 
-/* Draw-on animation for the circle strokes */
-#stroke1, #stroke2 { transition: stroke-dashoffset 1.2s ease; }
+@keyframes rough-draw {
+  to { stroke-dashoffset: 0; }
+}
 
 .slide-header .circle-btn {
   position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
@@ -392,14 +394,7 @@ html, body {
         <div class="quad quad-tr">STRATEGIC</div>
         <div class="quad quad-bl">DEPRIORITIZE</div>
         <div class="quad quad-br">QUICK WINS</div>
-        <svg id="circle-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <filter id="marker-blur"><feGaussianBlur stdDeviation="1.8"/></filter>
-          </defs>
-          <ellipse cx="390" cy="500" rx="360" ry="455" fill="none" stroke="rgb(220,20,20)" stroke-width="18" stroke-opacity="0.12" filter="url(#marker-blur)"/>
-          <path id="stroke1" fill="none" stroke="rgb(220,20,20)" stroke-width="9" stroke-opacity="0.88" stroke-linecap="round" stroke-linejoin="round"/>
-          <path id="stroke2" fill="none" stroke="rgb(220,20,20)" stroke-width="7" stroke-opacity="0.65" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <svg id="circle-overlay" xmlns="http://www.w3.org/2000/svg"></svg>
         <div id="auto-label">
           <div class="pill">Automate or eliminate</div>
           <div class="sub">~60-70% of current PSM time</div>
@@ -722,23 +717,24 @@ function goTo(n) {
   document.getElementById('next-btn').disabled = current === SLIDES.length - 1;
 }
 
-/* ══ Circle toggle (slide 1) ══ */
+/* ══ Circle toggle (slide 1) — RoughNotation style ══ */
 let circleVisible = false;
+
 function toggleCircle() {
   circleVisible = !circleVisible;
   const btn = document.getElementById('circle-toggle');
-  const overlay = document.getElementById('circle-overlay');
+  const svg = document.getElementById('circle-overlay');
   const label = document.getElementById('auto-label');
   if (circleVisible) {
     drawCircle();
     positionLabel();
-    overlay.classList.add('visible');
-    label.classList.add('visible');
     btn.textContent = 'Hide opportunity';
     btn.classList.add('active');
   } else {
-    overlay.classList.remove('visible');
+    // fade out paths then clear
+    svg.style.opacity = '0';
     label.classList.remove('visible');
+    setTimeout(() => { svg.innerHTML = ''; svg.style.opacity = ''; }, 350);
     btn.textContent = 'Show opportunity';
     btn.classList.remove('active');
   }
@@ -876,30 +872,101 @@ function resetCards() {
   showToast('Layout reset');
 }
 
-/* ══ Circle overlay ══ */
-function drawCircle() {
-  const W = document.getElementById('chart1').offsetWidth;
-  const H = document.getElementById('chart1').offsetHeight;
-  const cx=390, cy=500, rx=355, ry=460, n=300;
-  function wobblePath(rxIn, ryIn, phase) {
-    const pts=[];
-    for (let i=0;i<=n;i++) {
-      const t=2*Math.PI*i/n;
-      const noise=8*Math.sin(2*t+0.5+phase)+4*Math.sin(3*t+1.2+phase)+2*Math.sin(5*t+2+phase);
-      pts.push([cx+(rxIn+noise)*Math.cos(t), cy+(ryIn+noise)*Math.sin(t)]);
-    }
-    return 'M '+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L ')+' Z';
+/* ══ RoughNotation-style circle overlay ══ */
+
+// Generate a rough hand-drawn ellipse path (like RoughJS)
+function roughEllipsePath(cx, cy, rx, ry, seed) {
+  const n = 120;           // number of points around the ellipse
+  const roughness = 1.5;   // how wobbly the line is
+  const bowing = 1.2;      // broad waviness
+  const rng = mulberry32(seed);  // seeded random for consistency
+
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = (2 * Math.PI * i) / n;
+    // Multiple noise frequencies for a natural hand-drawn feel
+    const jitterR = roughness * (rng() * 2 - 1) * 3;
+    const bow = bowing * Math.sin(3 * t + rng() * 0.5) * 4;
+    const drift = roughness * Math.sin(5 * t + seed) * 2;
+    const x = cx + (rx + jitterR + bow + drift) * Math.cos(t);
+    const y = cy + (ry + jitterR + bow * 0.7 + drift) * Math.sin(t);
+    pts.push([x, y]);
   }
-  document.getElementById('stroke1').setAttribute('d', wobblePath(rx,ry,0));
-  document.getElementById('stroke2').setAttribute('d', wobblePath(rx+4,ry+4,0.08));
+
+  // Convert to SVG path with cubic bezier curves for smoothness
+  let d = `M ${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const prev = pts[i - 1];
+    const curr = pts[i];
+    const next = pts[Math.min(i + 1, pts.length - 1)];
+    // Simple catmull-rom to cubic bezier
+    const cp1x = prev[0] + (curr[0] - (i > 1 ? pts[i-2][0] : prev[0])) / 6;
+    const cp1y = prev[1] + (curr[1] - (i > 1 ? pts[i-2][1] : prev[1])) / 6;
+    const cp2x = curr[0] - (next[0] - prev[0]) / 6;
+    const cp2y = curr[1] - (next[1] - prev[1]) / 6;
+    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${curr[0].toFixed(1)},${curr[1].toFixed(1)}`;
+  }
+  d += ' Z';
+  return d;
+}
+
+// Simple seeded PRNG (mulberry32)
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function drawCircle() {
+  const svg = document.getElementById('circle-overlay');
+  const chartEl = document.getElementById('chart1');
+  const W = chartEl.offsetWidth;
+  const H = chartEl.offsetHeight;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+
+  // Ellipse centered on the left half of the chart (low-value quadrants)
+  const cx = W * 0.39;
+  const cy = H * 0.50;
+  const rx = W * 0.36;
+  const ry = H * 0.46;
+
+  // Two passes with different seeds — like RoughJS double-stroke
+  const passes = [
+    { seed: 42,  width: 3,   opacity: 0.85, delay: 0,   dur: 1200 },
+    { seed: 137, width: 2.2, opacity: 0.55, delay: 200, dur: 1000 },
+  ];
+
+  passes.forEach(p => {
+    const d = roughEllipsePath(cx, cy, rx, ry, p.seed);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('stroke-width', p.width);
+    path.setAttribute('stroke-opacity', p.opacity);
+    svg.appendChild(path);
+
+    // Measure length, set up stroke-dashoffset animation
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    path.style.animation = `rough-draw ${p.dur}ms ease-out ${p.delay}ms forwards`;
+  });
+
+  // Show label after the circle finishes drawing
+  const label = document.getElementById('auto-label');
+  setTimeout(() => label.classList.add('visible'), 1100);
 }
 
 function positionLabel() {
   const chartEl = document.getElementById('chart1');
-  const W=chartEl.offsetWidth, H=chartEl.offsetHeight;
-  const lbl=document.getElementById('auto-label');
-  lbl.style.left=(W*0.39-100)+'px';
-  lbl.style.top =(H*0.955)+'px';
+  const W = chartEl.offsetWidth, H = chartEl.offsetHeight;
+  const lbl = document.getElementById('auto-label');
+  lbl.style.left = (W * 0.39 - 100) + 'px';
+  lbl.style.top = (H * 0.955) + 'px';
 }
 
 /* ══ Slide 4 agent node info ══ */
