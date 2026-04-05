@@ -3,51 +3,458 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GitHub Pages · Test</title>
+<title>OpenClaw — Agent Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
+  /* ════════════════════════════════════════════
+     AGENT DATA — edit in <script> block below
+     ════════════════════════════════════════════ */
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --white:      #ffffff;
+    --bg:         #f7f6f3;
+    --surface:    #ffffff;
+    --border:     #e4e2dc;
+    --border-mid: #d0cec6;
+    --text:       #1a1916;
+    --muted:      #8a8880;
+    --faint:      #b8b6b0;
+
+    --green:      #0e7c58;
+    --green-light:#e8f5ef;
+    --green-mid:  #c2e8d6;
+
+    --red:        #c0392b;
+    --red-light:  #fdf0ee;
+    --red-mid:    #f5c6c2;
+
+    --amber:      #b45309;
+    --amber-light:#fef9ee;
+
+    --slate:      #475569;
+    --slate-light:#f1f5f9;
+
+    --sans: 'DM Sans', sans-serif;
+    --serif: 'DM Serif Display', serif;
+  }
+
   body {
-    margin: 0;
-    background: #0a0c0f;
-    color: #e2e8f0;
-    font-family: 'Courier New', monospace;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
-  .card {
-    text-align: center;
-    padding: 3rem 4rem;
-    border: 1px solid rgba(29,158,117,0.3);
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+
+  /* ── header ── */
+  header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem; }
+
+  .header-left .kicker {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--green); margin-bottom: 8px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .sub { font-size: 14px; color: var(--muted); margin-top: 6px; font-weight: 300; }
+
+  .header-stats { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .stat-row { display: flex; gap: 8px; }
+  .stat {
+    font-size: 11px; font-weight: 400;
+    padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .stat strong { color: var(--text); font-weight: 500; }
+
+  /* ── divider ── */
+  .divider { height: 1px; background: var(--border); margin-bottom: 2rem; }
+
+  /* ── legend ── */
+  .legend {
+    display: flex; gap: 24px; margin-bottom: 1.5rem;
+    font-size: 12px; color: var(--muted); flex-wrap: wrap; align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .ldot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-note { margin-left: auto; font-size: 11px; color: var(--faint); font-style: italic; }
+
+  /* ── canvas ── */
+  .canvas-wrap {
+    background: var(--white);
+    border: 1px solid var(--border);
     border-radius: 16px;
-    background: #111418;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.03);
   }
-  .dot {
-    width: 12px; height: 12px;
-    background: #1D9E75;
-    border-radius: 50%;
-    display: inline-block;
-    margin-bottom: 1.5rem;
-    animation: pulse 2s ease-in-out infinite;
+  svg#flow { width: 100%; display: block; }
+
+  /* ── SVG animations ── */
+  @keyframes pulse-out {
+    0%   { r: 46; opacity: 0.5; }
+    100% { r: 68; opacity: 0; }
   }
-  @keyframes pulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(29,158,117,0.4); }
-    50%      { box-shadow: 0 0 0 10px rgba(29,158,117,0); }
+  @keyframes dash-move   { to { stroke-dashoffset: -44; } }
+  @keyframes dash-slow   { to { stroke-dashoffset: -44; } }
+  @keyframes dash-faint  { to { stroke-dashoffset: -32; } }
+
+  .pulse  { animation: pulse-out 2.4s ease-out infinite; fill: none; }
+  .pulse2 { animation: pulse-out 3s ease-out infinite .9s; fill: none; }
+  .e-active { stroke-dasharray: 8 5; animation: dash-move 1.5s linear infinite; }
+  .e-slow   { stroke-dasharray: 7 6; animation: dash-slow 2.2s linear infinite; }
+  .e-faint  { stroke-dasharray: 4 8; animation: dash-faint 4s linear infinite; opacity: 0.35; }
+
+  /* ── info panel ── */
+  #info {
+    margin-top: 1.5rem;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    min-height: 96px;
+    transition: border-color 0.2s;
   }
-  h1 { font-size: 1.4rem; margin: 0 0 0.5rem; color: #fff; }
-  p  { font-size: 0.85rem; color: #5a6578; margin: 0; }
-  .ts { margin-top: 1.5rem; font-size: 0.75rem; color: #2a6e50; }
+  #info.active { border-color: var(--green-mid); }
+  #info.stalled { border-color: var(--red-mid); }
+
+  .hint { font-size: 13px; color: var(--faint); font-style: italic; padding-top: 8px; }
+
+  .info-name {
+    font-family: var(--serif); font-size: 1.3rem;
+    color: var(--text); margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .badge {
+    font-family: var(--sans); font-size: 10px; font-weight: 500;
+    padding: 3px 10px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .b-active  { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+  .b-stalled { background: var(--red-light);   color: var(--red);   border: 1px solid var(--red-mid); }
+  .b-idle    { background: var(--slate-light);  color: var(--slate); border: 1px solid #cbd5e1; }
+  .b-running { background: var(--green-light);  color: var(--green); border: 1px solid var(--green-mid); }
+
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1.25rem; }
+  .field label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--faint); display: block; margin-bottom: 3px; }
+  .field span  { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .field .mono { font-family: 'Courier New', monospace; font-size: 12px; }
+
+  /* ── bottom bar ── */
+  .bottom-bar { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--sans); font-size: 12px; font-weight: 500;
+    padding: 8px 18px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border-mid); background: var(--white);
+    color: var(--muted); transition: all 0.15s; text-decoration: none; display: inline-block;
+  }
+  .btn:hover { border-color: var(--green); color: var(--green); background: var(--green-light); }
+  .btn-primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-primary:hover { background: #0a6347; color: #fff; border-color: #0a6347; }
+
+  /* ── footer ── */
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    font-size: 11px; color: var(--faint);
+  }
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="dot"></div>
-  <h1>GitHub Pages is working</h1>
-  <p>openclaw · agent-viz repo</p>
-  <div class="ts" id="ts"></div>
+<div class="page">
+
+  <header>
+    <div class="header-left">
+      <div class="kicker">OpenClaw · Agent Runtime</div>
+      <h1>Agent Flow Map</h1>
+      <div class="sub">Real-time view of active agent sessions and data flow</div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-row">
+        <div class="stat">Agents <strong id="agent-count">4</strong></div>
+        <div class="stat">Context <strong>486k</strong> / 1M tkn</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat">Host <strong>192.168.6.35</strong></div>
+        <div class="stat" id="ts-stat">Generated <strong id="ts-val">—</strong></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="ldot" style="background:#0e7c58"></span>Active</div>
+    <div class="legend-item"><span class="ldot" style="background:#c0392b"></span>Stalled</div>
+    <div class="legend-item"><span class="ldot" style="background:#94a3b8"></span>Idle</div>
+    <div class="legend-item"><span class="ldot" style="background:#b45309"></span>Warning</div>
+    <div class="legend-note">Animated dots indicate data in transit between agents</div>
+  </div>
+
+  <div class="canvas-wrap">
+    <svg id="flow" viewBox="0 0 960 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#0e7c58" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arr-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arr-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- subtle bg ticks -->
+      <line x1="0" y1="240" x2="960" y2="240" stroke="#f0ede8" stroke-width="1"/>
+      <line x1="480" y1="0" x2="480" y2="480" stroke="#f0ede8" stroke-width="1"/>
+
+      <!-- ══ EDGES ══ -->
+
+      <!-- Coda → Workshop -->
+      <path id="e1" d="M 238 195 C 340 195 380 230 448 258"
+        fill="none" stroke="#0e7c58" stroke-width="1.5"
+        class="e-active" marker-end="url(#arr-g)" opacity="0.55"/>
+
+      <!-- Coda → Ingest -->
+      <path id="e2" d="M 228 230 C 310 310 360 340 428 358"
+        fill="none" stroke="#0e7c58" stroke-width="1.5"
+        class="e-slow" marker-end="url(#arr-g)" opacity="0.55"/>
+
+      <!-- Coda → HTTP (setup, faint) -->
+      <path id="e3" d="M 240 235 C 340 400 660 400 728 350"
+        fill="none" stroke="#94a3b8" stroke-width="1"
+        class="e-faint" marker-end="url(#arr-s)"/>
+
+      <!-- Ingest → Workshop (kb feed) -->
+      <path id="e4" d="M 518 355 C 550 320 560 295 558 278"
+        fill="none" stroke="#94a3b8" stroke-width="1"
+        class="e-faint" marker-end="url(#arr-s)" opacity="0.5"/>
+
+      <!-- Workshop → HTTP (file output, stalled) -->
+      <path id="e5" d="M 618 268 C 680 268 710 300 728 328"
+        fill="none" stroke="#c0392b" stroke-width="1"
+        class="e-faint" marker-end="url(#arr-r)" opacity="0.35"/>
+
+      <!-- ══ PACKETS ══ -->
+      <circle r="5" fill="#0e7c58">
+        <animateMotion dur="2.5s" repeatCount="indefinite" begin="0s"><mpath href="#e1"/></animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.88;1" dur="2.5s" repeatCount="indefinite" begin="0s"/>
+      </circle>
+      <circle r="5" fill="#0e7c58">
+        <animateMotion dur="2.5s" repeatCount="indefinite" begin="1.25s"><mpath href="#e1"/></animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.88;1" dur="2.5s" repeatCount="indefinite" begin="1.25s"/>
+      </circle>
+      <circle r="4.5" fill="#3aab82">
+        <animateMotion dur="3.4s" repeatCount="indefinite" begin="0.6s"><mpath href="#e2"/></animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.08;0.88;1" dur="3.4s" repeatCount="indefinite" begin="0.6s"/>
+      </circle>
+      <circle r="3.5" fill="#94a3b8">
+        <animateMotion dur="5s" repeatCount="indefinite" begin="1.2s"><mpath href="#e4"/></animateMotion>
+        <animate attributeName="opacity" values="0;0.7;0.7;0" keyTimes="0;0.1;0.85;1" dur="5s" repeatCount="indefinite" begin="1.2s"/>
+      </circle>
+
+      <!-- ══ NODES ══ -->
+
+      <!-- CODA — orchestrator -->
+      <g id="node-coda" class="agent-node" data-id="coda" style="cursor:pointer">
+        <circle class="pulse"  cx="175" cy="205" r="46" stroke="#0e7c58" stroke-width="1"/>
+        <circle class="pulse2" cx="175" cy="205" r="46" stroke="#0e7c58" stroke-width="0.5"/>
+        <!-- body -->
+        <circle cx="175" cy="205" r="62" fill="#e8f5ef" stroke="#c2e8d6" stroke-width="1"/>
+        <circle cx="175" cy="205" r="46" fill="#ffffff" stroke="#0e7c58" stroke-width="1.5"/>
+        <!-- inner ring -->
+        <circle cx="175" cy="205" r="30" fill="none" stroke="#c2e8d6" stroke-width="1"/>
+        <text x="175" y="198" text-anchor="middle"
+          font-family="'DM Serif Display',serif" font-size="17" fill="#0e7c58">Coda</text>
+        <text x="175" y="214" text-anchor="middle"
+          font-family="'DM Sans',sans-serif" font-size="9" fill="#3aab82" letter-spacing="0.16em" font-weight="500">ORCHESTRATOR</text>
+        <!-- token pill -->
+        <rect x="118" y="243" width="114" height="19" rx="9.5" fill="#e8f5ef" stroke="#c2e8d6" stroke-width="1"/>
+        <text x="175" y="256" text-anchor="middle"
+          font-family="'DM Sans',sans-serif" font-size="10" fill="#0e7c58" font-weight="500">486k / 1M tokens</text>
+      </g>
+
+      <!-- WORKSHOP BUILDER — stalled -->
+      <g id="node-workshop" class="agent-node" data-id="workshop" style="cursor:pointer">
+        <circle cx="533" cy="265" r="58" fill="#fdf0ee" stroke="#f5c6c2" stroke-width="1"/>
+        <circle cx="533" cy="265" r="44" fill="#ffffff" stroke="#c0392b" stroke-width="1.5"/>
+        <circle cx="533" cy="265" r="28" fill="none" stroke="#f5c6c2" stroke-width="1"/>
+        <text x="533" y="256" text-anchor="middle"
+          font-family="'DM Serif Display',serif" font-size="15" fill="#c0392b">Workshop</text>
+        <text x="533" y="270" text-anchor="middle"
+          font-family="'DM Serif Display',serif" font-size="15" fill="#c0392b">Builder</text>
+        <text x="533" y="284" text-anchor="middle"
+          font-family="'DM Sans',sans-serif" font-size="8.5" fill="#c0392b" letter-spacing="0.14em" font-weight="500">SUB-AGENT</text>
+        <!-- stalled badge -->
+        <rect x="487" y="300" width="92" height="18" rx="9" fill="#fdf0ee" stroke="#f5c6c2" stroke-width="1"/>
+        <text x="533" y="313" text-anchor="middle"
+          font-family="'DM Sans',sans-serif" font-size="9.5" fill="#c0392b" font-weight="500">0 files written</text>
+      </g>
+
+      <!-- INGEST WATCHER -->
+      <g id="node-ingest" class="agent-node" data-id="ingest" style="cursor:pointer">
+        <circle class="pulse"  cx="468" cy="370" r="38" stroke="#0e7c58" stroke-width="0.8" style="animation-duration:3s"/>
+        <circle cx="468" cy="370" r="50" fill="#e8f5ef" stroke="#c2e8d6" stroke-width="1"/>
+        <circle cx="468" cy="370" r="36" fill="#ffffff" stroke="#0e7c58" stroke-width="1.5"/>
+        <circle cx="468" cy="370" r="22" fill="none" stroke="#c2e8d6" stroke-width="1"/>
+        <text x="468" y="363" text-anchor="middle"
+          font-family="'DM Serif Display',serif" font-size="13" fill="#0e7c58">ingest.py</text>
+        <text x="468" y="378" text-anchor="middle"
+          font-family="'DM Sans',sans-serif" font-size="8" fill="#3aab82" letter-spacing="0.14em" font-weight="500">WATCHER</text>
+        <rect x="422" y="399" width="92" height="17" rx="8.5" fill="#e8f5ef" stroke="#c2e8d6" stroke-width="1"/>
+        <text x="468" y="411" text-anchor="middle"
+          font-family="'DM Sans',sans-serif" font-size="9" fill="#0e7c58" font-weight="500">PID 186088 · 5h+</text>
+      </g>
+
+      <!-- HTTP SERVER -->
+      <g id="node-http" class="agent-node" data-id="http" style="cursor:pointer">
+        <circle cx="752" cy="340" r="40" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+        <circle cx="752" cy="340" r="28" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+        <circle cx="752" cy="340" r="16" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+        <text x="752" y="334" text-anchor="middle"
+          font-family="'DM Serif Display',serif" font-size="14" fill="#475569">:3003</text>
+        <text x="752" y="348" text-anchor="middle"
+          font-family="'DM Sans',sans-serif" font-size="8" fill="#94a3b8" letter-spacing="0.14em" font-weight="500">HTTP SERVER</text>
+        <rect x="716" y="362" width="72" height="16" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="752" y="374" text-anchor="middle"
+          font-family="'DM Sans',sans-serif" font-size="9" fill="#64748b" font-weight="400">idle · port 3003</text>
+      </g>
+
+      <!-- EDGE LABELS -->
+      <text x="318" y="186" text-anchor="middle"
+        font-family="'DM Sans',sans-serif" font-size="10" fill="#3aab82" font-weight="500" letter-spacing="0.06em">sessions_yield</text>
+      <text x="310" y="298" text-anchor="middle"
+        font-family="'DM Sans',sans-serif" font-size="10" fill="#3aab82" font-weight="500" letter-spacing="0.06em">spawn</text>
+      <text x="560" y="325" text-anchor="middle"
+        font-family="'DM Sans',sans-serif" font-size="10" fill="#94a3b8" letter-spacing="0.06em">kb feed</text>
+      <text x="684" y="258" text-anchor="middle"
+        font-family="'DM Sans',sans-serif" font-size="10" fill="#94a3b8" letter-spacing="0.06em">file output</text>
+    </svg>
+  </div>
+
+  <!-- info panel -->
+  <div id="info">
+    <p class="hint">Click any agent node to inspect details</p>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="btn btn-primary" onclick="window.location.reload()">↺ Refresh</button>
+    <button class="btn" onclick="navigator.clipboard.writeText('kill 186088').then(()=>alert('Copied: kill 186088'))">⎘ Copy kill command</button>
+    <button class="btn" onclick="navigator.clipboard.writeText('scp gstoa@192.168.6.35:~/.openclaw/workspace/projects/work/agent-map.html ~/Downloads/agent-map.html').then(()=>alert('Copied!'))">⎘ Copy SCP command</button>
+  </div>
+
+  <footer>
+    <span>OpenClaw Agent Map · <span id="gen-ts"></span></span>
+    <span>openclaw · 192.168.6.35:18789</span>
+  </footer>
+
 </div>
+
 <script>
-  document.getElementById('ts').textContent = 'loaded ' + new Date().toLocaleString();
+/* ═══════════════════════════════════════════════════
+   EDIT AGENT DATA HERE
+   ═══════════════════════════════════════════════════ */
+const AGENTS = {
+  coda: {
+    name: 'Coda',
+    role: 'Orchestrator',
+    status: 'active',
+    task: 'Rebuild IFP workshop from scratch. Audit format, style, and missing pieces.',
+    tokens: '486,444',
+    pid: '—',
+    started: '9:34 PM',
+    elapsed: '5h 17m',
+    files: 'Delegated to sub-agents',
+    notes: 'Spawned Workshop Builder via sessions_yield. Launched ingest.py watcher and HTTP server on :3003.',
+  },
+  workshop: {
+    name: 'Workshop Builder',
+    role: 'Sub-agent (sessions_yield)',
+    status: 'stalled',
+    task: 'Build complete IFP workshop HTML in ifp-workshop-v2/. Read knowledge base, then write section by section.',
+    tokens: '486,444',
+    pid: '—',
+    started: '9:35 PM',
+    elapsed: '5h 16m',
+    files: '0 — directory empty',
+    notes: 'Consumed ~486k tokens reading knowledge base. Token counter frozen. No output written. Recommend kill and restart with constrained prompt.',
+  },
+  ingest: {
+    name: 'ingest.py',
+    role: 'Watcher Process',
+    status: 'running',
+    task: 'Watch for new files and ingest into IFP knowledge base. Long-running --watch daemon.',
+    tokens: 'N/A',
+    pid: '186088',
+    started: '12:13 AM',
+    elapsed: '5h 17m',
+    files: 'Writing to /tmp/ifp-ingest.log',
+    notes: '7.1% CPU · 22+ min cumulative CPU time. Actively processing.',
+  },
+  http: {
+    name: 'HTTP Server',
+    role: 'Process',
+    status: 'idle',
+    task: 'Serve ifp-workshop-v2 directory over HTTP on port 3003.',
+    tokens: 'N/A',
+    pid: '188061',
+    started: '3:07 AM',
+    elapsed: '2h 23m',
+    files: 'Serving from ~/.openclaw/workspace/projects/work/workshops/ifp-workshop-v2',
+    notes: 'Waiting for Workshop Builder to write files. No content yet.',
+  },
+};
+
+const STATUS_BADGE = {
+  active:  '<span class="badge b-active">Active</span>',
+  stalled: '<span class="badge b-stalled">Stalled</span>',
+  idle:    '<span class="badge b-idle">Idle</span>',
+  running: '<span class="badge b-running">Running</span>',
+};
+
+function renderInfo(id) {
+  const a = AGENTS[id];
+  if (!a) return;
+  const panel = document.getElementById('info');
+  panel.className = a.status;
+  panel.innerHTML = `
+    <div class="info-name">${a.name} ${STATUS_BADGE[a.status] || ''}</div>
+    <div class="info-grid">
+      <div class="field"><label>Role</label><span>${a.role}</span></div>
+      <div class="field"><label>Task</label><span>${a.task}</span></div>
+      <div class="field"><label>Tokens</label><span class="mono">${a.tokens}</span></div>
+      <div class="field"><label>PID</label><span class="mono">${a.pid}</span></div>
+      <div class="field"><label>Started</label><span>${a.started}</span></div>
+      <div class="field"><label>Elapsed</label><span>${a.elapsed}</span></div>
+      <div class="field"><label>Files Written</label><span>${a.files}</span></div>
+      <div class="field"><label>Notes</label><span>${a.notes}</span></div>
+    </div>`;
+}
+
+document.querySelectorAll('.agent-node').forEach(n => {
+  n.addEventListener('click', () => renderInfo(n.dataset.id));
+  n.addEventListener('mouseenter', () => n.style.opacity = '0.85');
+  n.addEventListener('mouseleave', () => n.style.opacity = '1');
+});
+
+const now = new Date();
+const fmt = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+document.getElementById('ts-val').textContent = fmt;
+document.getElementById('gen-ts').textContent = fmt;
 </script>
 </body>
 </html>
