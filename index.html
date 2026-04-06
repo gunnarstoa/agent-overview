@@ -1322,17 +1322,13 @@ function makeDraggable(card, handle, chartEl, cardId) {
 }
 
 function resetCards() {
-  if (!confirm('Reset card positions to defaults?')) return;
-  try { localStorage.removeItem(STORAGE_KEY); } catch {}
-  const chartEl = document.getElementById('chart1');
-  if (!chartEl) return;
-  const W = chartEl.offsetWidth, H = chartEl.offsetHeight;
-  CARDS.forEach(c => {
-    const el = document.getElementById('card-'+c.id+'-s1');
-    if (!el) return;
-    el.style.left=(c.px/100*W)+'px'; el.style.top=(c.py/100*H)+'px';
-    el.dataset.pctL=c.px; el.dataset.pctT=c.py;
-  });
+  if (!confirm('Reset all groups and positions to defaults?')) return;
+  try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(CARDS_STORAGE); } catch {}
+  // Restore CARDS from defaults
+  CARDS.length = 0;
+  DEFAULT_CARDS.forEach(c => CARDS.push({ ...c, bullets: [...c.bullets] }));
+  rebuildChart();
+  if (editorOpen) renderEditor();
   showToast('Layout reset');
 }
 
